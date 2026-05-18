@@ -417,6 +417,7 @@ const state = {
   latestResult: null,
   shareImageUrl: null,
   shareImageBlob: null,
+  shareImageDataUrl: null,
 };
 
 function getFrequency(frequencyId) {
@@ -483,6 +484,7 @@ function clearShareImageCache() {
 
   state.shareImageUrl = null;
   state.shareImageBlob = null;
+  state.shareImageDataUrl = null;
 }
 
 function showScreen(screen) {
@@ -730,6 +732,18 @@ function canvasToBlob(canvas) {
   });
 }
 
+function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.addEventListener("load", () => resolve(reader.result), { once: true });
+    reader.addEventListener("error", () => reject(new Error("Image preview failed")), {
+      once: true,
+    });
+    reader.readAsDataURL(blob);
+  });
+}
+
 function loadAvatarImage(result) {
   return new Promise((resolve, reject) => {
     const blob = new Blob([renderDreamAvatar(result)], {
@@ -888,14 +902,22 @@ async function createShareImageBlob(result) {
 
 async function ensureShareImageBlob(result = state.latestResult) {
   if (!result) return null;
-  if (state.shareImageBlob) return state.shareImageBlob;
+  if (state.shareImageBlob) {
+    if (!state.shareImageDataUrl) {
+      state.shareImageDataUrl = await blobToDataUrl(state.shareImageBlob);
+      shareImagePreview.src = state.shareImageDataUrl;
+    }
+
+    return state.shareImageBlob;
+  }
 
   const blob = await createShareImageBlob(result);
+  const dataUrl = await blobToDataUrl(blob);
 
   clearShareImageCache();
   state.shareImageBlob = blob;
-  state.shareImageUrl = URL.createObjectURL(blob);
-  shareImagePreview.src = state.shareImageUrl;
+  state.shareImageDataUrl = dataUrl;
+  shareImagePreview.src = dataUrl;
 
   return blob;
 }
@@ -906,12 +928,13 @@ async function updateShareImagePreview(result) {
 
   try {
     const blob = await createShareImageBlob(result);
+    const dataUrl = await blobToDataUrl(blob);
 
     if (state.latestResult !== result) return;
 
     state.shareImageBlob = blob;
-    state.shareImageUrl = URL.createObjectURL(blob);
-    shareImagePreview.src = state.shareImageUrl;
+    state.shareImageDataUrl = dataUrl;
+    shareImagePreview.src = dataUrl;
   } catch (error) {
     shareImagePreview.alt = "黑名单照生成失败";
     toast.textContent = "黑名单照生成失败了，但文字结果还能分享。";
@@ -935,6 +958,10 @@ function getMessengerName() {
   if (ua.includes(" qq/") || ua.includes("mqqbrowser")) return "QQ";
 
   return "";
+}
+
+function focusShareImage() {
+  shareImagePreview.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
 function renderResult(resultOverride = null) {
@@ -966,7 +993,11 @@ function renderResult(resultOverride = null) {
     .join("");
 
   const shareUrl = createShareUrl(result);
+  const messengerName = getMessengerName();
+
   shareUrlCopy.textContent = `公开分享链接：${shareUrl}`;
+  shareButton.textContent = messengerName ? "复制链接，长按保存图" : "分享黑名单照";
+  saveImageButton.textContent = messengerName ? "长按保存图片" : "保存图片";
   document.title = `${result.name} · 梦批人格`;
   safelyReplaceUrl(createLocalResultUrl(result));
   updateShareImagePreview(result);
@@ -1074,6 +1105,15 @@ async function saveShareImage() {
   try {
     toast.textContent = "黑名单照生成中。";
     const blob = await ensureShareImageBlob();
+    const messengerName = getMessengerName();
+
+    if (messengerName) {
+      await copyText(createShareText(state.latestResult)).catch(() => false);
+      focusShareImage();
+      toast.textContent = `${messengerName}里点按钮不能直接存图；链接已复制，长按上面的黑名单照保存后手动发。`;
+      return;
+    }
+
     downloadBlob(blob, `mengpi-blacklist-${state.latestResult.code}.png`);
     toast.textContent = "黑名单照已保存，发出去就有案底了。";
   } catch (error) {
@@ -1095,6 +1135,14 @@ async function shareResult() {
 
   try {
     const blob = await ensureShareImageBlob(result);
+
+    if (messengerName) {
+      await copyText(createShareText(result)).catch(() => false);
+      focusShareImage();
+      toast.textContent = `${messengerName}不支持网页直接弹出“发给谁”。链接已复制，长按上面的黑名单照保存，再发给朋友。`;
+      return;
+    }
+
     const file = new File([blob], `mengpi-blacklist-${result.code}.png`, {
       type: "image/png",
     });
