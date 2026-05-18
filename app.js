@@ -1,5 +1,5 @@
 // 绑定正式域名后填这里；留空时分享链接会使用当前线上页面地址。
-const PUBLIC_SITE_URL = "https://xzl-1742.github.io/";
+const PUBLIC_SITE_URL = "https://tinyurl.com/2a453bwz";
 
 const frequencyOptions = [
   {
