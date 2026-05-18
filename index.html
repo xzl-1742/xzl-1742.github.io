@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="梦批人格：鉴定你的梦中精神状态，看看你睡着后到底是哪种离谱人格。"
+    />
+    <title>梦批人格 | 鉴定你的梦中精神状态</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23120f14'/%3E%3Cpath d='M12 38h40v12H12z' fill='%23ff5c45'/%3E%3Cpath d='M12 12h18v18H12zM34 12h18v18H34z' fill='%23d7ff37'/%3E%3Cpath d='M20 22h24' stroke='%232ee7d1' stroke-width='6'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <canvas id="dream-canvas" aria-hidden="true"></canvas>
+
+    <main class="app-shell">
+      <section class="screen screen-active" id="intro-screen" aria-labelledby="intro-title">
+        <div class="intro-layout">
+          <div class="intro-copy">
+            <p class="kicker">夜间脑内异常鉴定处</p>
+            <h1 id="intro-title">梦批人格</h1>
+            <p class="subtitle">鉴定你的梦中精神状态</p>
+            <p class="intro-note">
+              现实里的你先放一边。现在查的是：你睡着以后，梦里那个不太对劲的你。
+            </p>
+          </div>
+
+          <div class="scanner" aria-label="梦境扫描装置">
+            <div class="scanner-grid">
+              <span>C</span>
+              <span>F</span>
+              <span>A</span>
+              <span>R</span>
+              <span>D</span>
+              <span>E</span>
+              <span>S</span>
+              <span>B</span>
+            </div>
+            <div class="scanner-bar"></div>
+          </div>
+        </div>
+
+        <div class="frequency-block">
+          <div>
+            <p class="section-label">先交代一下</p>
+            <h2>你最近做梦属于哪种精神状态？</h2>
+          </div>
+          <div class="frequency-options" id="frequency-options"></div>
+        </div>
+
+        <button class="primary-action" id="start-button" type="button" disabled>
+          开始鉴定
+        </button>
+      </section>
+
+      <section class="screen" id="quiz-screen" aria-labelledby="question-title">
+        <div class="quiz-head">
+          <p class="kicker" id="question-count">第 1 / 12 题</p>
+          <div class="progress-track" aria-hidden="true">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+        </div>
+
+        <article class="question-block">
+          <p class="section-label" id="question-dimension">梦里管事，还是梦里随缘</p>
+          <h2 id="question-title"></h2>
+          <p id="question-scene"></p>
+          <div class="answer-list" id="answer-list"></div>
+        </article>
+
+        <div class="quiz-actions">
+          <button class="ghost-action" id="prev-button" type="button">上一题</button>
+          <p id="answer-hint">选一个最像你的梦里反应</p>
+        </div>
+      </section>
+
+      <section class="screen" id="result-screen" aria-labelledby="result-title">
+        <div class="result-shell" id="result-card">
+          <p class="kicker">梦批十六型黑名单命中：</p>
+
+          <div class="result-hero">
+            <div class="character-card" id="character-card">
+              <div class="character-illustration" id="character-illustration"></div>
+              <p class="character-caption" id="character-caption"></p>
+            </div>
+
+            <div class="result-identity">
+              <h2 id="result-title"></h2>
+              <p class="result-opener">别装了，你睡着后就是……</p>
+              <p class="result-name" id="result-name"></p>
+              <div class="result-code-row" id="result-code-row"></div>
+            </div>
+          </div>
+
+          <div class="result-copy">
+            <div>
+              <p class="section-label">黑名单解析</p>
+              <p id="dream-copy"></p>
+            </div>
+            <div>
+              <p class="section-label">现实外溢</p>
+              <p id="reality-copy"></p>
+            </div>
+            <div>
+              <p class="section-label">朋友鉴定</p>
+              <p id="share-line"></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="share-panel" aria-label="梦批黑名单照分享区">
+          <div class="share-preview-frame">
+            <img
+              id="share-image-preview"
+              alt="梦批人格黑名单照预览"
+              width="1080"
+              height="1440"
+            />
+          </div>
+          <div class="share-panel-copy">
+            <p class="section-label">黑名单照已生成</p>
+            <h3>发出去，让朋友顺着链接来查自己。</h3>
+            <p id="share-url-copy"></p>
+            <p class="share-help">
+              微信/QQ 不弹系统分享时，复制链接，再长按黑名单照保存图片手动发。
+            </p>
+          </div>
+        </div>
+
+        <div class="result-actions">
+          <button class="primary-action" id="share-button" type="button">分享黑名单照</button>
+          <button class="ghost-action" id="copy-button" type="button">复制分享链接</button>
+          <button class="ghost-action" id="save-image-button" type="button">保存图片</button>
+          <button class="ghost-action" id="restart-button" type="button">我也要测</button>
+        </div>
+        <p class="toast" id="toast" role="status" aria-live="polite"></p>
+      </section>
+    </main>
+
+    <script src="./app.js" defer></script>
+  </body>
+</html>
